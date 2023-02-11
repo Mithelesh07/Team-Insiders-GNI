@@ -1,0 +1,629 @@
+const Web3 = require('web3');
+const Contract = require('truffle-contract');
+const fs = require('fs');
+// Connect web3
+const provider = new ethers.providers.Web3Provider(window.ethereum);
+const signer = provider.getSigner();
+
+const contractAddress = "0xD69FD01C2264AbF976D883B32dCD724e426C897B";
+
+const contract = new ethers.Contract(
+    contractAddress,
+    [
+        {
+            "inputs": [
+                {
+                    "internalType": "string",
+                    "name": "_uri",
+                    "type": "string"
+                },
+                {
+                    "internalType": "address payable",
+                    "name": "gatewayAddress",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint64",
+                    "name": "_destGasLimit",
+                    "type": "uint64"
+                }
+            ],
+            "stateMutability": "nonpayable",
+            "type": "constructor"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "account",
+                    "type": "address"
+                },
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "operator",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "bool",
+                    "name": "approved",
+                    "type": "bool"
+                }
+            ],
+            "name": "ApprovalForAll",
+            "type": "event"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "bytes",
+                    "name": "srcContractAddress",
+                    "type": "bytes"
+                },
+                {
+                    "internalType": "bytes",
+                    "name": "payload",
+                    "type": "bytes"
+                },
+                {
+                    "internalType": "string",
+                    "name": "srcChainId",
+                    "type": "string"
+                },
+                {
+                    "internalType": "uint64",
+                    "name": "srcChainType",
+                    "type": "uint64"
+                }
+            ],
+            "name": "handleRequestFromSource",
+            "outputs": [
+                {
+                    "internalType": "bytes",
+                    "name": "",
+                    "type": "bytes"
+                }
+            ],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "from",
+                    "type": "address"
+                },
+                {
+                    "internalType": "address",
+                    "name": "to",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256[]",
+                    "name": "ids",
+                    "type": "uint256[]"
+                },
+                {
+                    "internalType": "uint256[]",
+                    "name": "amounts",
+                    "type": "uint256[]"
+                },
+                {
+                    "internalType": "bytes",
+                    "name": "data",
+                    "type": "bytes"
+                }
+            ],
+            "name": "safeBatchTransferFrom",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "from",
+                    "type": "address"
+                },
+                {
+                    "internalType": "address",
+                    "name": "to",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "id",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "amount",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "bytes",
+                    "name": "data",
+                    "type": "bytes"
+                }
+            ],
+            "name": "safeTransferFrom",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "operator",
+                    "type": "address"
+                },
+                {
+                    "internalType": "bool",
+                    "name": "approved",
+                    "type": "bool"
+                }
+            ],
+            "name": "setApprovalForAll",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint64",
+                    "name": "chainType",
+                    "type": "uint64"
+                },
+                {
+                    "internalType": "string",
+                    "name": "chainId",
+                    "type": "string"
+                },
+                {
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                }
+            ],
+            "name": "setContractOnChain",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "operator",
+                    "type": "address"
+                },
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "from",
+                    "type": "address"
+                },
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "to",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256[]",
+                    "name": "ids",
+                    "type": "uint256[]"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256[]",
+                    "name": "values",
+                    "type": "uint256[]"
+                }
+            ],
+            "name": "TransferBatch",
+            "type": "event"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint64",
+                    "name": "chainType",
+                    "type": "uint64"
+                },
+                {
+                    "internalType": "string",
+                    "name": "chainId",
+                    "type": "string"
+                },
+                {
+                    "internalType": "uint64",
+                    "name": "expiryDurationInSeconds",
+                    "type": "uint64"
+                },
+                {
+                    "internalType": "uint64",
+                    "name": "destGasPrice",
+                    "type": "uint64"
+                },
+                {
+                    "components": [
+                        {
+                            "internalType": "uint256[]",
+                            "name": "nftIds",
+                            "type": "uint256[]"
+                        },
+                        {
+                            "internalType": "uint256[]",
+                            "name": "nftAmounts",
+                            "type": "uint256[]"
+                        },
+                        {
+                            "internalType": "bytes",
+                            "name": "nftData",
+                            "type": "bytes"
+                        },
+                        {
+                            "internalType": "bytes",
+                            "name": "recipient",
+                            "type": "bytes"
+                        }
+                    ],
+                    "internalType": "struct XERC1155.TransferParams",
+                    "name": "transferParams",
+                    "type": "tuple"
+                }
+            ],
+            "name": "transferCrossChain",
+            "outputs": [],
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "operator",
+                    "type": "address"
+                },
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "from",
+                    "type": "address"
+                },
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "to",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "id",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "value",
+                    "type": "uint256"
+                }
+            ],
+            "name": "TransferSingle",   
+            "type": "event"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": false,
+                    "internalType": "string",
+                    "name": "value",
+                    "type": "string"
+                },
+                {
+                    "indexed": true,
+                    "internalType": "uint256",
+                    "name": "id",
+                    "type": "uint256"
+                }
+            ],
+            "name": "URI",
+            "type": "event"
+        },
+        {
+            "inputs": [],
+            "name": "admin",
+            "outputs": [
+                {
+                    "internalType": "address",
+                    "name": "",
+                    "type": "address"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "account",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "id",
+                    "type": "uint256"
+                }
+            ],
+            "name": "balanceOf",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address[]",
+                    "name": "accounts",
+                    "type": "address[]"
+                },
+                {
+                    "internalType": "uint256[]",
+                    "name": "ids",
+                    "type": "uint256[]"
+                }
+            ],
+            "name": "balanceOfBatch",
+            "outputs": [
+                {
+                    "internalType": "uint256[]",
+                    "name": "",
+                    "type": "uint256[]"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "destGasLimit",
+            "outputs": [
+                {
+                    "internalType": "uint64",
+                    "name": "",
+                    "type": "uint64"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "gatewayContract",
+            "outputs": [
+                {
+                    "internalType": "contract IGateway",
+                    "name": "",
+                    "type": "address"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint64",
+                    "name": "eventIdentifier",
+                    "type": "uint64"
+                },
+                {
+                    "internalType": "bool[]",
+                    "name": "execFlags",
+                    "type": "bool[]"
+                },
+                {
+                    "internalType": "bytes[]",
+                    "name": "execData",
+                    "type": "bytes[]"
+                }
+            ],
+            "name": "handleCrossTalkAck",
+            "outputs": [],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "account",
+                    "type": "address"
+                },
+                {
+                    "internalType": "address",
+                    "name": "operator",
+                    "type": "address"
+                }
+            ],
+            "name": "isApprovedForAll",
+            "outputs": [
+                {
+                    "internalType": "bool",
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint64",
+                    "name": "",
+                    "type": "uint64"
+                },
+                {
+                    "internalType": "string",
+                    "name": "",
+                    "type": "string"
+                }
+            ],
+            "name": "ourContractOnChains",
+            "outputs": [
+                {
+                    "internalType": "bytes",
+                    "name": "",
+                    "type": "bytes"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "bytes4",
+                    "name": "interfaceId",
+                    "type": "bytes4"
+                }
+            ],
+            "name": "supportsInterface",
+            "outputs": [
+                {
+                    "internalType": "bool",
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "bytes",
+                    "name": "_bytes",
+                    "type": "bytes"
+                }
+            ],
+            "name": "toAddress",
+            "outputs": [
+                {
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                }
+            ],
+            "stateMutability": "pure",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "a",
+                    "type": "address"
+                }
+            ],
+            "name": "toBytes",
+            "outputs": [
+                {
+                    "internalType": "bytes",
+                    "name": "b",
+                    "type": "bytes"
+                }
+            ],
+            "stateMutability": "pure",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "name": "uri",
+            "outputs": [
+                {
+                    "internalType": "string",
+                    "name": "",
+                    "type": "string"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        }
+    ],
+    signer
+);
+// Call a getter method
+const contractName = await Contract.requestToDest();
+console.log(`Contract name is ${contractName}`);
+// Connect to the Ethereum blockchain
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+
+// Load the NFT contract JSON file
+const contractJSON = JSON.parse(fs.readFileSync('./build/contracts/NFT.json', 'utf8'));
+
+// Create a contract object
+const nftContract = Contract(contractJSON);
+nftContract.setProvider(web3.currentProvider);
+
+async function createNFT(metadata) {
+  // Get the contract instance
+  const nft = await nftContract.deployed();
+  
+  // Create the NFT
+  const tx = await nft.createNFT(metadata, { from: web3.eth.defaultAccount });
+  
+  // Get the token ID of the newly created NFT
+  const tokenId = await nft.tokenOfOwnerByIndex.call(web3.eth.defaultAccount, 0);
+  
+  return tokenId;
+}
+
+async function transferNFT(tokenId, to) {
+  // Get the contract instance
+  const nft = await nftContract.deployed();
+  
+  // Transfer the NFT
+  const tx = await nft.transfer(to, tokenId, { from: web3.eth.defaultAccount });
+  
+  return tx;
+}   
+
+async function getNFTMetadata(tokenId) {
+  // Get the contract instance
+  const nft = await nftContract.deployed();
+  
+  // Retrieve the NFT metadata
+  const metadata = await nft.getTokenMetadata.call(tokenId);
+  
+  return metadata;
+}
